@@ -59,9 +59,6 @@ AUTHELIA_HOME_ASSISTANT_GROUP="${3}"
 ## generally not recommended to allow more than necessary.
 USERNAME_PATTERN='^[a-z|A-Z|0-9|_|-|.]+$'
 
-## Temporary file path for storing authelia headers
-TMP_FILE_NAME="./tmp_curl_${username}_$(date +%s)"
-
 ## Log messages to stderr.
 log() {
   echo "$1" >&2
@@ -85,19 +82,15 @@ fi
 [ $err -ne 0 ] && exit 2
 
 ## Authenticate with authelia and dump headers to temporary file
-curl --silent \
-  --request GET \
+RESPONSE=$(curl --silent \
   --header "X-Original-URL: ${HOME_ASSISTANT_DOMAIN}" \
   --basic --user "${username}:${password}" \
-  -D "${TMP_FILE_NAME}" \
-  "${AUTHELIA_DOMAIN}/api/verify?auth=basic"
+  -D- \
+  "${AUTHELIA_DOMAIN}/api/verify?auth=basic")
 
 ## Extract user name and groups from temporary file
-homeassistant_name=$(grep remote-name < "${TMP_FILE_NAME}" | cut -d ' ' -f 2-)
-homeassistant_groups=$(grep remote-groups < "${TMP_FILE_NAME}" | cut -d ' ' -f 2-)
-
-## Delete temporary file
-rm "${TMP_FILE_NAME}"
+homeassistant_name=$(echo "${RESPONSE}" | grep remote-name | cut -d ' ' -f 2-)
+homeassistant_groups=$(echo "${RESPONSE}" | grep remote-groups | cut -d ' ' -f 2-)
 
 ## Check if user name is set. Otherwise exit becaus we'r not authenticated
 if [ -z "${homeassistant_name}" ]; then
