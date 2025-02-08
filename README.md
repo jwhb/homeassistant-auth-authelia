@@ -36,7 +36,7 @@ This script uses the command line auth_providers by [Home Assistant](https://hom
         - type: command_line
           command: /config/bin/auth_authelia.sh
           args:
-            ["https://auth.example.com", "https://homeassistant.example.com", "homeassistant_users"]
+            ["https://auth.example.com", "https://homeassistant.example.com", "homeassistant_users", "homeassistant_admins"]
           meta: true
         - type: homeassistant
     ```

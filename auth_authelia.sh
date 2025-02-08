@@ -27,10 +27,10 @@
 
 ## Inspired by https://kevo.io/posts/2023-01-29-authelia-home-assistant-auth/ by Kevin O'Connor
 
-## This script expects 2 command line parametes. You can specifiy a third one.
-## Usage: authelia_auth.sh AUTHELIA_DOMAIN HOMEASSISTANT_DOMAIN [AUTHELIA_HOMEASSISTANT_GROUP]
+## This script expects 2 required and two optional command line parameters.
+## Usage: authelia_auth.sh AUTHELIA_DOMAIN HOMEASSISTANT_DOMAIN [AUTHELIA_HOMEASSISTANT_GROUP] [AUTHELIA_HOMEASSISTANT_ADMIN_GROUP]
 
-## AUTHELIA_DOMAIN: Domain of your authelia instance 
+## AUTHELIA_DOMAIN: Domain of your authelia instance
 ## For example:
 ##  - https://sso.example.com
 ##  - https://example.com/auth
@@ -46,6 +46,10 @@
 ##  - homassistant_users
 ##  - home_automation
 
+## AUTHELIA_HOMEASSISTANT_ADMIN_GROUP (optional): The authelia group name for users that are allowed to manage home assistant
+## For example:
+##  - homassistant_admins
+
 ## The variables ${username} and ${password} will be set to the environment by home assistant
 
 
@@ -53,6 +57,7 @@
 AUTHELIA_DOMAIN="${1}"
 HOMEASSISTANT_DOMAIN="${2}"
 AUTHELIA_HOMEASSISTANT_GROUP="${3}"
+AUTHELIA_HOMEASSISTANT_ADMIN_GROUP="${4}"
 
 ## Usernames should be validated using a regular expression to be of
 ## a known format. Special characters will be escaped anyway, but it is
@@ -99,14 +104,18 @@ if [ -z "${homeassistant_name}" ]; then
 else
 
   ## Check if home assistant group is specified
-
+  admin_permissions=false
   if [ -n "${AUTHELIA_HOMEASSISTANT_GROUP}" ]; then 
 
-    ## Check if on the of the users group returned by server ,atches the specified home assistant group.
+    ## Check if on the of the users group returned by server matches the specified home assistant group.
     ## If it has a match, grant group permissions
     for group in $(echo "${homeassistant_groups}" | sed -r 's/,/ /g'); do
       if [ "${group}" = "${AUTHELIA_HOMEASSISTANT_GROUP}" ]; then
         group_permissions=true
+      fi
+      if [ -n "${AUTHELIA_HOMEASSISTANT_ADMIN_GROUP}" ] && [ "${group}" = "${AUTHELIA_HOMEASSISTANT_ADMIN_GROUP}" ]; then
+        group_permissions=true
+        admin_permissions=true
       fi
     done
   else
@@ -117,6 +126,9 @@ else
   ## If group permissions are granted, echo the user name as expected by home assistant
   if [ "${group_permissions}" = true ]; then
     echo "name = ${homeassistant_name}"
+    if [ "${admin_permissions}" = true ]; then
+      echo "group = system-admin"
+    fi
   else
     ## Otherwise exit
     log "User has no permissions to access Home Assistant. Check group membership."
