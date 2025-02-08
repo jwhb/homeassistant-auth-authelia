@@ -94,13 +94,21 @@ RESPONSE=$(curl --silent \
   "${AUTHELIA_DOMAIN}/api/verify?auth=basic")
 
 ## Extract user name and groups from temporary file
-homeassistant_name=$(echo "${RESPONSE}" | grep remote-name | cut -d ' ' -f 2-)
-homeassistant_groups=$(echo "${RESPONSE}" | grep remote-groups | cut -d ' ' -f 2-)
+user_name=$(echo "${RESPONSE}" | grep remote-name | cut -d ' ' -f 2- | tr -d '[:space:]')
+user_groups=$(echo "${RESPONSE}" | grep remote-groups | cut -d ' ' -f 2-)
+if [ -z "${user_name}" ]; then
+  # fall back from display name to user name
+  user_name=$(echo "${RESPONSE}" | grep remote-user | cut -d ' ' -f 2-)
+fi
+if [ -z "${user_name}" ]; then
+  log "Could not determine username."
+  exit 3
+fi
 
 ## Check if user name is set. Otherwise exit becaus we'r not authenticated
-if [ -z "${homeassistant_name}" ]; then
-    log "Could not authenticate with server."
-    exit 3
+if [ -z "${user_name}" ]; then
+  log "Could not authenticate with server."
+  exit 3
 else
 
   ## Check if home assistant group is specified
@@ -109,7 +117,7 @@ else
 
     ## Check if on the of the users group returned by server matches the specified home assistant group.
     ## If it has a match, grant group permissions
-    for group in $(echo "${homeassistant_groups}" | sed -r 's/,/ /g'); do
+    for group in $(echo "${user_groups}" | sed -r 's/,/ /g'); do
       if [ "${group}" = "${AUTHELIA_HOMEASSISTANT_GROUP}" ]; then
         group_permissions=true
       fi
@@ -125,7 +133,7 @@ else
 
   ## If group permissions are granted, echo the user name as expected by home assistant
   if [ "${group_permissions}" = true ]; then
-    echo "name = ${homeassistant_name}"
+    echo "name = ${user_name}"
     if [ "${admin_permissions}" = true ]; then
       echo "group = system-admin"
     fi
