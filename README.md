@@ -8,9 +8,27 @@ This script uses the command line auth_providers by [Home Assistant](https://hom
 
 1. Two factor authentication for your home assistant URL has to be disabled in Authelia.
 
-2. Put _auth_authelia.sh_ to any path that is accessible by home assistant (e.g. /config/bin/auth_authelia.sh).
+    ```yaml
+    access_control:
+      rules:
+        - domain: 'https://homeassistant.example.com'
+          policy: one_factor
+    ```
 
-3. Configure Home Assistant to use a command line authentication provider by adding the following to your configuration.yaml:
+2. Enable the _Legacy endpoint_ in Authelia:
+
+    ```yaml
+    server:
+      endpoints:
+        authz:
+          legacy:  # used by homeassistant
+            implementation: 'Legacy'
+            authn_strategies: []
+    ```
+
+3. Put _auth_authelia.sh_ to any path that is accessible by home assistant (e.g. /config/bin/auth_authelia.sh).
+
+4. Configure Home Assistant to use a command line authentication provider by adding the following to your configuration.yaml:
 
     ```yaml
     homeassistant:
