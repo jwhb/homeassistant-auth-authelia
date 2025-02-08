@@ -51,8 +51,8 @@
 
 ## Populate variables from command line
 AUTHELIA_DOMAIN="${1}"
-HOME_ASSISTANT_DOMAIN="${2}"
-AUTHELIA_HOME_ASSISTANT_GROUP="${3}"
+HOMEASSISTANT_DOMAIN="${2}"
+AUTHELIA_HOMEASSISTANT_GROUP="${3}"
 
 ## Usernames should be validated using a regular expression to be of
 ## a known format. Special characters will be escaped anyway, but it is
@@ -83,7 +83,7 @@ fi
 
 ## Authenticate with authelia and dump headers to temporary file
 RESPONSE=$(curl --silent \
-  --header "X-Original-URL: ${HOME_ASSISTANT_DOMAIN}" \
+  --header "X-Original-URL: ${HOMEASSISTANT_DOMAIN}" \
   --basic --user "${username}:${password}" \
   -D- \
   "${AUTHELIA_DOMAIN}/api/verify?auth=basic")
@@ -100,12 +100,12 @@ else
 
   ## Check if home assistant group is specified
 
-  if [ -n "${AUTHELIA_HOME_ASSISTANT_GROUP}" ]; then 
+  if [ -n "${AUTHELIA_HOMEASSISTANT_GROUP}" ]; then 
 
     ## Check if on the of the users group returned by server ,atches the specified home assistant group.
     ## If it has a match, grant group permissions
     for group in $(echo "${homeassistant_groups}" | sed -r 's/,/ /g'); do
-      if [ "${group}" = "${AUTHELIA_HOME_ASSISTANT_GROUP}" ]; then
+      if [ "${group}" = "${AUTHELIA_HOMEASSISTANT_GROUP}" ]; then
         group_permissions=true
       fi
     done
