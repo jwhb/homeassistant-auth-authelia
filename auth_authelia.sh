@@ -95,10 +95,10 @@ RESPONSE=$(curl --silent \
 
 ## Extract user name and groups from temporary file
 user_name=$(echo "${RESPONSE}" | grep remote-name | cut -d ' ' -f 2- | tr -d '[:space:]')
-user_groups=$(echo "${RESPONSE}" | grep remote-groups | cut -d ' ' -f 2-)
+user_groups=$(echo "${RESPONSE}" | grep remote-groups | cut -d ' ' -f 2- | tr -d '[:space:]')
 if [ -z "${user_name}" ]; then
   # fall back from display name to user name
-  user_name=$(echo "${RESPONSE}" | grep remote-user | cut -d ' ' -f 2-)
+  user_name=$(echo "${RESPONSE}" | grep remote-user | cut -d ' ' -f 2- | tr -d '[:space:]')
 fi
 if [ -z "${user_name}" ]; then
   log "Could not determine username."
